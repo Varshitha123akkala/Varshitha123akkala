@@ -1,0 +1,127 @@
+// Required dependencies
+const express = require('express');
+const session = require('express-session');
+const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt');
+
+const app = express();
+const port = 3000;
+
+// Example database (replace with your database connection)
+let users = [
+    { id: 1, username: 'admin', passwordHash: '$2b$10$7y6ehXpdDpcjdwF73A0dDeTq.h9g.ZAucRMy.fj9iv6VDCR8b53Pa', role: 'admin' },
+    { id: 2, username: 'user', passwordHash: '$2b$10$VOPf7VcUqgZ9ZL3wSlnZyO2LDDYBLAsq1dm5AIGlP5B.01BbjfFq6', role: 'user' }
+];
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+    secret: 'secret-key', // Change this to a strong, random key
+    resave: false,
+    saveUninitialized: true
+}));
+
+// Function to check if user is authenticated
+function checkAuthenticated(req, res, next) {
+    if (req.session.user) {
+        next();
+    } else {
+        res.status(401).send('Unauthorized');
+    }
+}
+
+// Function to check if user is authorized based on role
+function checkRole(role) {
+    return (req, res, next) => {
+        if (req.session.user && req.session.user.role === role) {
+            next();
+        } else {
+            res.status(403).send('Forbidden');
+        }
+    };
+}
+
+// Routes
+
+// Home route
+app.get('/', (req, res) => {
+    res.send('Welcome to the homepage');
+});
+
+// Login route
+app.get('/login', (req, res) => {
+    res.send(`
+        <h2>Login</h2>
+        <form action="/login" method="post">
+            <input type="text" name="username" placeholder="Username" required><br>
+            <input type="password" name="password" placeholder="Password" required><br>
+            <button type="submit">Login</button>
+        </form>
+    `);
+});
+
+// Login post route
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    const user = users.find(user => user.username === username);
+
+    if (user && bcrypt.compareSync(password, user.passwordHash)) {
+        req.session.user = { id: user.id, username: user.username, role: user.role };
+        res.redirect('/dashboard');
+    } else {
+        res.status(401).send('Invalid username or password');
+    }
+});
+
+// Registration route (for demonstration, not a typical feature in production)
+app.get('/register', (req, res) => {
+    res.send(`
+        <h2>Registration</h2>
+        <form action="/register" method="post">
+            <input type="text" name="username" placeholder="Username" required><br>
+            <input type="password" name="password" placeholder="Password" required><br>
+            <select name="role" required>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select><br>
+            <button type="submit">Register</button>
+        </form>
+    `);
+});
+
+// Registration post route (for demonstration, not a typical feature in production)
+app.post('/register', (req, res) => {
+    const { username, password, role } = req.body;
+    const hashedPassword = bcrypt.hashSync(password, 10); // Hash password with bcrypt
+
+    // Simulate database insertion (replace with actual database operation)
+    const newUser = { id: users.length + 1, username, passwordHash: hashedPassword, role };
+    users.push(newUser);
+
+    res.redirect('/login');
+});
+
+// Protected dashboard route for admins
+app.get('/admin/dashboard', checkAuthenticated, checkRole('admin'), (req, res) => {
+    res.send(Welcome ${req.session.user.username} to the admin dashboard);
+});
+
+// Protected route for users
+app.get('/user/dashboard', checkAuthenticated, checkRole('user'), (req, res) => {
+    res.send(Welcome ${req.session.user.username} to the user dashboard);
+});
+
+// Logout route
+app.get('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).send('Internal Server Error');
+        }
+        res.redirect('/');
+    });
+});
+
+// Start server
+app.listen(port, () => {
+    console.log(Server started on http://localhost:${port});
+});
