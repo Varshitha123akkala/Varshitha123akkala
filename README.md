@@ -7,7 +7,7 @@ Hello! I’m Varshitha Akkala, an aspiring Full Stack Developer passionate about
 - **Project Development**: Completed projects in full-stack web development, including CRUD-based apps, e-commerce websites, and real-time chat applications.  
 
  ###**Education**  
-- **B.Tech 3rd Year** | Samskruti College of Engineering and Technology (CGPA: 8.7)  
+- **B.Tech** | Samskruti College of Engineering and Technology (CGPA: 8.7)  
 
 ### 🛠️ **Skills & Tools**  
 - **Languages**: HTML, CSS, JavaScript, C, Python, Java  
